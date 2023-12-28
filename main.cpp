@@ -170,10 +170,7 @@ struct TextShaderAttributeLocations {
 	GLint coord;                                // coordinate represented as (x, y, s, t)
 } textShaderAttribLocs;
 
-// testing some fucked up shit
-void setupBuffers();
-void cleanupBuffers();
-// HOLY SHIT IT WORKS ???? CANNOT believe I can just get away with that and NOT have it tank my fps
+void wormSetup();
 
 //**********************************************************************************************************************
 // Helper Funcs
@@ -492,24 +489,20 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
             case GLFW_KEY_MINUS: {
                 // if we can go further down, do so
                 if ( !(threshold - .05f < .1f) ) {
-                    cleanupBuffers();
-
                     threshold -= .05f;
                     generateWorms();
 
-                    setupBuffers();
+                    wormSetup();
                 }
                 break;
             }
             case GLFW_KEY_EQUAL: {
                 // if we can go further up, do so
                 if ( !(threshold + .05f > .9f) ) {
-                    cleanupBuffers();
-
                     threshold += .05f;
                     generateWorms();
 
-                    setupBuffers();
+                    wormSetup();
                 }
 
                 break;
@@ -517,15 +510,12 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
             // pressing M toggles between terrain and worm mode
             case GLFW_KEY_M:
-                cleanupBuffers();
                 justWorm = !justWorm;
-                setupBuffers();
+                wormSetup();
                 break;
 
             // pressing L allows us to enter a new starting point
             case GLFW_KEY_L:
-                cleanupBuffers();
-
                 fprintf( stdout, "Please enter a new worm starting point.\n");
                 fflush( stdout );
                 int xVal, yVal, zVal, quelWorm;
@@ -554,13 +544,11 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
                 perlinWorms.at(quelWorm).setStart( {xVal, yVal, zVal} );
                 generateWorms();
 
-                setupBuffers();
+                wormSetup();
                 break;
 
             // pressing P switches the worm between branching off itself and not
             case GLFW_KEY_P: {
-                cleanupBuffers();
-
                 branchingWorm = !branchingWorm;
                 if (branchingWorm) {
                     perlinWorms.at(0).generate(); // only generate one branching worm, they big
@@ -568,7 +556,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
                     generateWorms();
                 }
 
-                setupBuffers();
+                wormSetup();
                 break;
             }
 
@@ -578,19 +566,15 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
                 // if we only have one worm, don't remove worms
                 if ( branchingWorm || perlinWorms.size() == 1 ) break;
 
-                cleanupBuffers();
-
                 perlinWorms.pop_back();
                 generateWorms();
 
-                setupBuffers();
+                wormSetup();
                 break;
             case GLFW_KEY_2:
                 // if we are currently branching, don't add worms
                 // if we already have 6 worms, don't add any worms
                 if ( branchingWorm || perlinWorms.size() == 6 ) break;
-
-                cleanupBuffers();
 
                 // secondary case to set new start of the worm
                 switch ( perlinWorms.size() ) {
@@ -619,7 +603,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
                         break;
                 }
 
-                setupBuffers();
+                wormSetup();
                 break;
 
             default:
@@ -987,9 +971,10 @@ void setupBuffers() {
     glBindBuffer( GL_UNIFORM_BUFFER, 0 );
 
     //------------  END    UBOs    ------------
+}
 
+void wormSetup() {
     //------------ START trans buf ------------
-    // TODO this should be it's own function so I can stop reloading all the UBOs to adjust the threshold values
     numInstances = 625 * 25;
     glm::vec4 transVecs[numInstances];
     int count = 0; // since we are no longer
@@ -1049,6 +1034,7 @@ void setupBuffers() {
 
     //------------  END trans buf  ------------
 }
+
 
 // /////////////////////////////////////////////////////////////////////////////
 /// \desc
@@ -1187,6 +1173,7 @@ GLFWwindow* initialize() {
     generateWorms();
 
     setupBuffers();										// load all our VAOs and VBOs onto the GPU
+    wormSetup();                                        // load the worm VAO specifically
     setupFonts();                                       // load all our fonts as a VAO to the GPU
     setupScene();                                       // initialize all of our scene information
 
